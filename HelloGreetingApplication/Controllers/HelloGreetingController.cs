@@ -254,7 +254,7 @@ namespace HelloGreetingApplication.Controllers
                     responce1.Success = condition;
                     responce1.Message = "Greeting Recieved succesfully";
                     responce1.Data = greeting;
-                    return NotFound(responce1);
+                    return Ok(responce1);
                 }
                 ResponseModel<string> responce = new ResponseModel<string>();
                 responce.Success = condition;
