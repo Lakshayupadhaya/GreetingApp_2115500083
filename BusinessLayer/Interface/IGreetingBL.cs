@@ -16,5 +16,7 @@ namespace BusinessLayer.Interface
         ResponseModel<string> SaveGreetingBL(GreetingRequestModel saveGreetingRequest);
 
         (string greeting, bool condition) GetGreetingByIdBL(int id);
+
+        GreetingsModel GetGreetingsBL();
     }
 }

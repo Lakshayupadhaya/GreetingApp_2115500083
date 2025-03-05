@@ -176,6 +176,11 @@ namespace HelloGreetingApplication.Controllers
             }
 
         }
+        /// <summary>
+        /// Get custommised greeting according to user name
+        /// </summary>
+        /// <param name="greetingRequest"></param>
+        /// <returns>Greeting with their name</returns>
         [HttpPost]
         [Route("GetGreeting")]
         public IActionResult GetGreeting([FromBody] GreetingRequestModel greetingRequest)
@@ -203,6 +208,11 @@ namespace HelloGreetingApplication.Controllers
             }
         }
 
+        /// <summary>
+        /// Save greeting in Database
+        /// </summary>
+        /// <param name="saveGreetingRequest"></param>
+        /// <returns>Responce of process</returns>
         [HttpPost]
         [Route("SaveGreeting")]
         public IActionResult SaveGreeting(GreetingRequestModel saveGreetingRequest)
@@ -226,7 +236,11 @@ namespace HelloGreetingApplication.Controllers
                 return BadRequest(responce);
             }
         }
-
+        /// <summary>
+        /// Get greeting by id
+        /// </summary>
+        /// <param name="greetingRequestId"></param>
+        /// <returns>Responce</returns>
         [HttpPost]
         [Route("GetGreeting/Id")]
         public IActionResult GetGreetingById([FromBody] IdRequestModel greetingRequestId)
@@ -257,6 +271,37 @@ namespace HelloGreetingApplication.Controllers
                 responce.Data = ex.Message;
                 return BadRequest(responce);
             }
+        }
+        /// <summary>
+        /// Get All greetings from Database
+        /// </summary>
+        /// <returns>Returns list of string greetings ith responce</returns>
+        [HttpGet]
+        [Route("Greetings/All")]
+        public IActionResult GetGreetings() 
+        {
+            try 
+            {
+                _logger.LogInformation("Starting the process of fetching all data");
+                GreetingsModel allGreetings = _greetingBL.GetGreetingsBL();
+                ResponseModel<GreetingsModel> response = new ResponseModel<GreetingsModel>();
+                response.Success = true;
+                response.Message = "Greetings Fetched successfully";
+                response.Data = allGreetings;
+                _logger.LogInformation("Greetings fetched successfully");
+                return Ok(response);
+            }
+            catch (Exception ex)  
+            {
+                _logger.LogError($"Error occured while fetching all greetings : {ex.Message}");
+                ResponseModel<string> responce = new ResponseModel<string>();
+                responce.Success = false;
+                responce.Message = "Process failed";
+                responce.Data = ex.Message;
+                return BadRequest(responce);
+            }
+            
+           
         }
     }
 }

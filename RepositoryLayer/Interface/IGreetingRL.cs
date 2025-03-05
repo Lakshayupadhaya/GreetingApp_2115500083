@@ -14,5 +14,7 @@ namespace RepositoryLayer.Interface
         GreetingEntity SaveGreetingRL(GreetingEntity greetingEntity);
 
         (string greeting, bool condition) GetGreetingByIdRL(int id);
+
+        List<string> GetGreetingsRL();
     }
 }

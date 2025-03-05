@@ -74,5 +74,28 @@ namespace RepositoryLayer.Service
             }
             return (greeting.Greeting, true);
         }
+
+        public List<string> GetGreetingsRL() 
+        {
+            try 
+            {
+                _logger.LogInformation("Starting the process of fetching greetings from dataset");
+                var Greetings = _dbContext.Greetings.Select(g => g.Greeting).ToList();
+
+                if (Greetings == null)
+                {
+                    _logger.LogInformation("Fetched successfully and was empty");
+                    return new List<string>();
+                }
+                _logger.LogInformation("Greeting Fetched successfully from database");
+                return Greetings;
+            }
+            catch (Exception ex) 
+            {
+                _logger.LogError("Error occured while fetching from database returning Customised list");
+                return new List<string> { ex.Message };
+            }
+            
+        }
     }
 }

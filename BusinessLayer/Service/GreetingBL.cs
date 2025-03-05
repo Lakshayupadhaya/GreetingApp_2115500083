@@ -75,5 +75,13 @@ namespace BusinessLayer.Service
         }
 
 
+        public GreetingsModel GetGreetingsBL() 
+        {
+            List<string> list = _greetingRL.GetGreetingsRL();
+
+            return new GreetingsModel { Greetings = list };
+        }
+
+
     }
 }
