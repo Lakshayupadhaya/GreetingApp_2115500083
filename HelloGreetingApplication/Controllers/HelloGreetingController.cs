@@ -217,9 +217,45 @@ namespace HelloGreetingApplication.Controllers
             catch (Exception ex)
             {
                 _logger.LogError($"Error occured while saving greeting : {ex.Message}");
-                ResponseModel<string> responceDB = _greetingBL.SaveGreetingBL(saveGreetingRequest);
+                ResponseModel<string> responce = new ResponseModel<string>();
+                responce.Success = false;
+                responce.Message = "Process failed";
+                responce.Data = ex.Message;
+                //ResponseModel<string> responceDB = _greetingBL.SaveGreetingBL(saveGreetingRequest);
 
-                return BadRequest(responceDB);
+                return BadRequest(responce);
+            }
+        }
+
+        [HttpPost]
+        [Route("GetGreeting/Id")]
+        public IActionResult GetGreetingById([FromBody] IdRequestModel greetingRequestId)
+        {
+            try
+            {
+                (string greeting, bool condition) = _greetingBL.GetGreetingByIdBL(greetingRequestId.Id);
+                if (condition)
+                {
+                    ResponseModel<string> responce1 = new ResponseModel<string>();
+                    responce1.Success = condition;
+                    responce1.Message = "Greeting Recieved succesfully";
+                    responce1.Data = greeting;
+                    return NotFound(responce1);
+                }
+                ResponseModel<string> responce = new ResponseModel<string>();
+                responce.Success = condition;
+                responce.Message = "Greeting Not found";
+                responce.Data = greeting;
+                return Ok(responce);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error occured while getting greeting : {ex.Message}");
+                ResponseModel<string> responce = new ResponseModel<string>();
+                responce.Success = false;
+                responce.Message = "Process failed";
+                responce.Data = ex.Message;
+                return BadRequest(responce);
             }
         }
     }

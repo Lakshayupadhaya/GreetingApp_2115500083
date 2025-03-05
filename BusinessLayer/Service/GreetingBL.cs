@@ -65,6 +65,15 @@ namespace BusinessLayer.Service
             return responce;
         }
 
+        public (string greeting, bool condition) GetGreetingByIdBL(int id)
+        {
+           (string greeting, bool condition) = _greetingRL.GetGreetingByIdRL(id);
+
+            return (greeting, condition);
+
+            
+        }
+
 
     }
 }

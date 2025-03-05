@@ -63,5 +63,16 @@ namespace RepositoryLayer.Service
             
 
         }
+
+        public (string greeting, bool condition) GetGreetingByIdRL(int id) 
+        {
+            var greeting = _dbContext.Greetings.FirstOrDefault(greeting => greeting.Id == id);
+
+            if( greeting == null)
+            {
+                return ($"Greeting not found for Id : {id}", false);
+            }
+            return (greeting.Greeting, true);
+        }
     }
 }
