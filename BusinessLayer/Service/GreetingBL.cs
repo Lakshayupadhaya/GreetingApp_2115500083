@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BusinessLayer.Interface;
 using ModelLayer.Model;
+using RepositoryLayer.Entity;
 using RepositoryLayer.Interface;
 using RepositoryLayer.Service;
 
@@ -44,6 +45,24 @@ namespace BusinessLayer.Service
             {
                 return "Hello World";
             }
+        }
+
+        public ResponseModel<string> SaveGreetingBL(GreetingRequestModel saveGreetingRequest)
+        {
+            string greetingMsg = GetGreetingBL(saveGreetingRequest);
+
+            GreetingEntity greetingEntity = new GreetingEntity();
+            greetingEntity.Greeting = greetingMsg;
+
+            GreetingEntity greetingEntityResponce = _greetingRL.SaveGreetingRL(greetingEntity);
+
+            ResponseModel<string> responce = new ResponseModel<string>();
+
+            responce.Success = true;
+            responce.Message = "Process successfull";
+            responce.Data = greetingEntityResponce.ToString();
+
+            return responce;
         }
 
 

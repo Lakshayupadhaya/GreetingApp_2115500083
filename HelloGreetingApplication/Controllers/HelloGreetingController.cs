@@ -178,7 +178,7 @@ namespace HelloGreetingApplication.Controllers
         }
         [HttpPost]
         [Route("GetGreeting")]
-        public IActionResult GetGreeting([FromBody] GreetingRequestModel greetingRequest) 
+        public IActionResult GetGreeting([FromBody] GreetingRequestModel greetingRequest)
         {
             try
             {
@@ -200,6 +200,26 @@ namespace HelloGreetingApplication.Controllers
                 responceModel.Data = ex.Message;
 
                 return BadRequest(responceModel);
+            }
+        }
+
+        [HttpPost]
+        [Route("SaveGreeting")]
+        public IActionResult SaveGreeting(GreetingRequestModel saveGreetingRequest)
+        {
+            try
+            {
+                _logger.LogInformation("Starting process of saving greeting according to user");
+                ResponseModel<string> responceDB = _greetingBL.SaveGreetingBL(saveGreetingRequest);
+                _logger.LogInformation("Greeting Saved successfully");
+                return Ok(responceDB);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error occured while saving greeting : {ex.Message}");
+                ResponseModel<string> responceDB = _greetingBL.SaveGreetingBL(saveGreetingRequest);
+
+                return BadRequest(responceDB);
             }
         }
     }

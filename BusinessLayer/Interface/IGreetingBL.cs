@@ -12,5 +12,7 @@ namespace BusinessLayer.Interface
         string GetGreetingBL();
 
         string GetGreetingBL(GreetingRequestModel greetingRequest);
+
+        ResponseModel<string> SaveGreetingBL(GreetingRequestModel saveGreetingRequest);
     }
 }

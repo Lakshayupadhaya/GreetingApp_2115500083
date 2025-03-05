@@ -1,5 +1,7 @@
 using BusinessLayer.Interface;
 using BusinessLayer.Service;
+using Microsoft.EntityFrameworkCore;
+using RepositoryLayer.Context;
 using RepositoryLayer.Interface;
 using RepositoryLayer.Service;
 
@@ -22,6 +24,11 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IGreetingBL, GreetingBL>();
 //Adding services of repository layer
 builder.Services.AddScoped<IGreetingRL, GreetingRL>();
+
+var connectionString = builder.Configuration.GetConnectionString("SqlConnection");
+builder.Services.AddDbContext<
+    GreetingAppContext>(options =>
+    options.UseSqlServer(connectionString));
 
 //Add swagger to the container
 builder.Services.AddEndpointsApiExplorer();
