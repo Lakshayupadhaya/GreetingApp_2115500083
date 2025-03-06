@@ -18,5 +18,7 @@ namespace BusinessLayer.Interface
         (string greeting, bool condition) GetGreetingByIdBL(int id);
 
         GreetingsModel GetGreetingsBL();
+
+        (bool condition, string status, string greeting) EditGreetingBL(IdRequestModel editGreetingRequest);
     }
 }

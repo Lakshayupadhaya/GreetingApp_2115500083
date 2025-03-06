@@ -82,6 +82,14 @@ namespace BusinessLayer.Service
             return new GreetingsModel { Greetings = list };
         }
 
+        public  (bool condition, string status, string greeting) EditGreetingBL(IdRequestModel editGreetingRequest)
+        {
+            GreetingEntity editGreeting = new GreetingEntity();
+            editGreeting.Id = editGreetingRequest.Id;
+            editGreeting.Greeting = editGreetingRequest.Greeting;
+            return _greetingRL.EditGreetingRL(editGreeting);
+        }
+
 
     }
 }

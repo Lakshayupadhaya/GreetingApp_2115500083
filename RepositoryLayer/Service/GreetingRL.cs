@@ -97,5 +97,24 @@ namespace RepositoryLayer.Service
             }
             
         }
+
+        public (bool condition, string status, string greeting) EditGreetingRL(GreetingEntity editGreetingRequest) 
+        {
+            try 
+            {
+                var greeting = _dbContext.Greetings.FirstOrDefault(i => i.Id == editGreetingRequest.Id);
+                if (greeting != null)
+                {
+                    greeting.Greeting = editGreetingRequest.Greeting;
+                    _dbContext.SaveChanges();
+                    return (true, "Greeting Edited", greeting.Greeting);
+                }
+                return (true, "Greeting Not Found", editGreetingRequest.Greeting);
+            }
+            catch (Exception ex) 
+            {
+                return (false, ex.Message, editGreetingRequest.Greeting);
+            }
+        }
     }
 }

@@ -11,5 +11,7 @@ namespace ModelLayer.Model
     {
         [Required]
         public int Id { get; set; }  
+
+        public string Greeting { get; set; }
     }
 }

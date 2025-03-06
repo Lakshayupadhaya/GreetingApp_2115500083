@@ -303,5 +303,43 @@ namespace HelloGreetingApplication.Controllers
             
            
         }
+
+        [HttpPatch]
+        [Route("Greeting/Edit")]
+        public IActionResult EditGreeting([FromBody] IdRequestModel editGreetingRequest) 
+        {
+            try 
+            {
+                (bool condition, string status, string greeting) = _greetingBL.EditGreetingBL(editGreetingRequest);
+                if (condition)
+                {
+                    ResponseModel<string> responseModel = new ResponseModel<string>();
+                    responseModel.Success = condition;
+                    responseModel.Message = status;
+                    responseModel.Data = " Eddited Greeting : " + greeting;
+                    return Ok(responseModel);
+                }
+                ResponseModel<string> response = new ResponseModel<string>();
+                response.Success = condition;
+                if (status == "Greeting Not Found")
+                {
+                    response.Message = status;
+                    response.Data = greeting;
+                    return NotFound(response);
+                }
+                response.Message = status;
+                response.Data = greeting;
+                return BadRequest(response);
+            }
+            catch (Exception ex) 
+            {
+                ResponseModel<string> response = new ResponseModel<string>();
+                response.Success = false;
+                response.Message = "Editind request failed";
+                response.Data = ex.Message;
+                return BadRequest(response);
+            }
+
+        }
     }
 }
