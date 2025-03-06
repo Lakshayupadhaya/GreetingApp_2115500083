@@ -116,5 +116,25 @@ namespace RepositoryLayer.Service
                 return (false, ex.Message, editGreetingRequest.Greeting);
             }
         }
+
+        public (bool condition, string status, string greeting) DeleteGreetingRL(GreetingEntity editGreetingRequest)
+        {
+            try
+            {
+                var greeting = _dbContext.Greetings.FirstOrDefault(i => i.Id == editGreetingRequest.Id);
+                if (greeting != null)
+                {
+                    string DeletedGreeting = greeting.Greeting;
+                    _dbContext.Remove(greeting);
+                    _dbContext.SaveChanges();
+                    return (true, "Greeting Removed", DeletedGreeting);
+                }
+                return (false, "Greeting Not Found", $"No greeting found for ID : {editGreetingRequest.Id}");
+            }
+            catch (Exception ex)
+            {
+                return (false, ex.Message, "Error Occured");
+            }
+        }
     }
 }

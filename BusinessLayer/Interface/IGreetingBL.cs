@@ -20,5 +20,7 @@ namespace BusinessLayer.Interface
         GreetingsModel GetGreetingsBL();
 
         (bool condition, string status, string greeting) EditGreetingBL(IdRequestModel editGreetingRequest);
+
+        (bool condition, string status, string greeting) DeleteGreetingBL(DeleteRequestModel deleteGreetingRequest);
     }
 }

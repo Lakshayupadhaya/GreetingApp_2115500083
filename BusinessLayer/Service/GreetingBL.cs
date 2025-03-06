@@ -90,6 +90,13 @@ namespace BusinessLayer.Service
             return _greetingRL.EditGreetingRL(editGreeting);
         }
 
+        public (bool condition, string status, string greeting) DeleteGreetingBL(DeleteRequestModel deleteGreetingRequest)
+        {
+            GreetingEntity deleteGreeting = new GreetingEntity();
+            deleteGreeting.Id = deleteGreetingRequest.Id;
+            return _greetingRL.DeleteGreetingRL(deleteGreeting);
+        }
+
 
     }
 }

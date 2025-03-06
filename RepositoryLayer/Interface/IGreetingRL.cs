@@ -18,5 +18,7 @@ namespace RepositoryLayer.Interface
         List<string> GetGreetingsRL();
 
         (bool condition, string status, string greeting) EditGreetingRL(GreetingEntity editGreetingRequest);
+
+        (bool condition, string status, string greeting) DeleteGreetingRL(GreetingEntity editGreetingRequest);
     }
 }
