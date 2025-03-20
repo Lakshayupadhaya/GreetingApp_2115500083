@@ -9,15 +9,18 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using RepositoryLayer.Entity;
+using RepositoryLayer.Interface;
 
 namespace RepositoryLayer.Helper
 {
     public class Jwt
     {
-        private readonly IConfiguration _config; 
-        public Jwt(IConfiguration config) 
+        private readonly IConfiguration _config;
+        private readonly IGreetingRL _greetingRL;
+        public Jwt(IConfiguration config, IGreetingRL greetingRl)
         {
             _config = config;
+            _greetingRL = greetingRl;
         }
         public string GenerateToken(UserEntity user) //After marking it as static you are unable to access the _config so used dependency injection and not static method
         {
@@ -43,6 +46,73 @@ namespace RepositoryLayer.Helper
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public bool ValidateToken(string token, int id)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(_config["Jwt:Key"]);
+
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ClockSkew = TimeSpan.Zero
+            };
+
+            try
+            {
+                var principal = tokenHandler.ValidateToken(token, validationParameters, out _);
+                //if (principal == null) 
+                //{
+                //    return false;
+                //}
+                var userIdClaim = principal.FindFirst("UserId");
+                int userId = int.Parse(userIdClaim.Value);
+
+                bool authorised = _greetingRL.CheckAction(userId, id);
+
+
+
+                return authorised; // Token is valid and id matched for the action
+            }
+            catch
+            {
+                return false; // Token is invalid or expired
+            }
+        }
+        public int? GetUserIdFromToken(string token)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes(_config["Jwt:Key"]);
+
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ClockSkew = TimeSpan.Zero
+            };
+
+            try
+            {
+                var principal = tokenHandler.ValidateToken(token, validationParameters, out _);
+                //var roleClaim = principal.FindFirst("Role");
+                //string role = roleClaim.Value;
+                var userIdClaim = principal.FindFirst("UserId");
+                int userId = int.Parse(userIdClaim.Value);
+
+                return userId;
+            }
+            catch
+            {
+                return null; // Return null if token is invalid
+            }
         }
     }
 }

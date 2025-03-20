@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ModelLayer.Model;
+using RepositoryLayer.Entity;
 
 namespace BusinessLayer.Interface
 {
@@ -13,14 +14,14 @@ namespace BusinessLayer.Interface
 
         string GetGreetingBL(GreetingRequestModel greetingRequest);
 
-        ResponseModel<string> SaveGreetingBL(GreetingRequestModel saveGreetingRequest);
+        public (bool authorised, GreetingEntity) SaveGreetingBL(GreetingRequestModel saveGreetingRequest, string token);
 
         (string greeting, bool condition) GetGreetingByIdBL(int id);
 
-        GreetingsModel GetGreetingsBL();
+        public (bool authorised, bool found, GreetingsModel) GetGreetingsBL(string token);
 
         (bool condition, string status, string greeting) EditGreetingBL(IdRequestModel editGreetingRequest);
 
-        (bool condition, string status, string greeting) DeleteGreetingBL(DeleteRequestModel deleteGreetingRequest);
+        (bool condition, string status, string greeting) DeleteGreetingBL(int id);
     }
 }

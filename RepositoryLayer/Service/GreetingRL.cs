@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RepositoryLayer.Context;
 using RepositoryLayer.Entity;
@@ -39,7 +40,7 @@ namespace RepositoryLayer.Service
             _dbContext.SaveChanges();
             _logger.LogInformation("Greeting saved to database successfully");
 
-            return new GreetingEntity { Id = greetingEntity.Id, Greeting = greetingEntity.Greeting };
+            return greetingEntity;
         }
 
         public (string greeting, bool condition) GetGreetingByIdRL(int id)
@@ -48,11 +49,15 @@ namespace RepositoryLayer.Service
             return greeting != null ? (greeting.Greeting, true) : ($"Greeting not found for Id: {id}", false);
         }
 
-        public List<string> GetGreetingsRL()
+        public List<string> GetGreetingsRL(int userId)
         {
             _logger.LogInformation("Fetching greetings from dataset");
-            return _dbContext.Greetings.Select(g => g.Greeting).ToList();
-        }
+            return _dbContext.Greetings
+                    .AsNoTracking()
+                    .Where(e => e.UserId == userId)
+                    .Select(e => e.Greeting)
+                    .ToList();
+                    }
 
         public (bool condition, string status, string greeting) EditGreetingRL(GreetingEntity editGreetingRequest)
         {
@@ -67,18 +72,29 @@ namespace RepositoryLayer.Service
             return (true, "Greeting Edited", greeting.Greeting);
         }
 
-        public (bool condition, string status, string greeting) DeleteGreetingRL(GreetingEntity editGreetingRequest)
+        public (bool condition, string status, string greeting) DeleteGreetingRL(int id)
         {
-            var greeting = _dbContext.Greetings.FirstOrDefault(i => i.Id == editGreetingRequest.Id);
+            var greeting = _dbContext.Greetings.FirstOrDefault(i => i.Id == id);
             if (greeting == null)
             {
-                return (false, "Greeting Not Found", $"No greeting found for ID: {editGreetingRequest.Id}");
+                return (false, "Greeting Not Found", $"No greeting found for ID: {id}");
             }
 
             string deletedGreeting = greeting.Greeting;
             _dbContext.Remove(greeting);
             _dbContext.SaveChanges();
             return (true, "Greeting Removed", deletedGreeting);
+        }
+
+        public bool CheckAction(int userId, int id) 
+        {
+
+            var greeting = _dbContext.Greetings.FirstOrDefault(e => e.Id == id);
+            if(greeting.UserId == userId) 
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

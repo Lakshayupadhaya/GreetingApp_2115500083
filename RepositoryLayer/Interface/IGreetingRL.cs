@@ -15,10 +15,12 @@ namespace RepositoryLayer.Interface
 
         (string greeting, bool condition) GetGreetingByIdRL(int id);
 
-        List<string> GetGreetingsRL();
+        public List<string> GetGreetingsRL(int userId);
 
         (bool condition, string status, string greeting) EditGreetingRL(GreetingEntity editGreetingRequest);
 
-        (bool condition, string status, string greeting) DeleteGreetingRL(GreetingEntity editGreetingRequest);
+        (bool condition, string status, string greeting) DeleteGreetingRL(int id);
+
+        public bool CheckAction(int userId, int id);
     }
 }

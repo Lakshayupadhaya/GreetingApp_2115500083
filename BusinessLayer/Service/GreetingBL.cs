@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using BusinessLayer.Interface;
 using ModelLayer.Model;
 using RepositoryLayer.Entity;
+using RepositoryLayer.Helper;
 using RepositoryLayer.Interface;
 using RepositoryLayer.Service;
 
@@ -14,10 +15,12 @@ namespace BusinessLayer.Service
     public class GreetingBL : IGreetingBL
     {
         private readonly IGreetingRL _greetingRL;
+        private readonly Jwt _jwt;
 
-        public GreetingBL(IGreetingRL greetingRL)
+        public GreetingBL(IGreetingRL greetingRL, Jwt jwt)
         {
             _greetingRL = greetingRL;
+            _jwt = jwt;
         }
 
         //Method to get  greeting form repository layer
@@ -47,22 +50,31 @@ namespace BusinessLayer.Service
             }
         }
 
-        public ResponseModel<string> SaveGreetingBL(GreetingRequestModel saveGreetingRequest)
+        public (bool authorised, GreetingEntity) SaveGreetingBL(GreetingRequestModel saveGreetingRequest, string token)
         {
-            string greetingMsg = GetGreetingBL(saveGreetingRequest);
 
+            string greetingMsg = GetGreetingBL(saveGreetingRequest);
+            var result = _jwt.GetUserIdFromToken(token);
+            if (result == null) 
+            {
+                return (false, new GreetingEntity());
+            }
+            int userId = result.Value;
             GreetingEntity greetingEntity = new GreetingEntity();
             greetingEntity.Greeting = greetingMsg;
+            greetingEntity.UserId = userId;
 
             GreetingEntity greetingEntityResponce = _greetingRL.SaveGreetingRL(greetingEntity);
 
-            ResponseModel<string> responce = new ResponseModel<string>();
+            return (true, greetingEntityResponce);
 
-            responce.Success = true;
-            responce.Message = "Process successfull";
-            responce.Data = greetingEntityResponce.ToString();
+            //ResponseModel<string> responce = new ResponseModel<string>();
 
-            return responce;
+            //responce.Success = true;
+            //responce.Message = "Process successfull";
+            //responce.Data = greetingEntityResponce.ToString();
+
+            //return responce;
         }
 
         public (string greeting, bool condition) GetGreetingByIdBL(int id)
@@ -75,11 +87,20 @@ namespace BusinessLayer.Service
         }
 
 
-        public GreetingsModel GetGreetingsBL() 
+        public (bool authorised, bool found, GreetingsModel) GetGreetingsBL(string token) 
         {
-            List<string> list = _greetingRL.GetGreetingsRL();
+            var result = _jwt.GetUserIdFromToken(token);
+            if(result == null) 
+            {
+                return (false, false, new GreetingsModel());
+            }
+            List<string> list = _greetingRL.GetGreetingsRL(result.Value);
+            if(list == null) 
+            {
+                return (true, false, new GreetingsModel());
+            }
 
-            return new GreetingsModel { Greetings = list };
+            return (true, true, new GreetingsModel { Greetings = list });
         }
 
         public  (bool condition, string status, string greeting) EditGreetingBL(IdRequestModel editGreetingRequest)
@@ -90,11 +111,11 @@ namespace BusinessLayer.Service
             return _greetingRL.EditGreetingRL(editGreeting);
         }
 
-        public (bool condition, string status, string greeting) DeleteGreetingBL(DeleteRequestModel deleteGreetingRequest)
+        public (bool condition, string status, string greeting) DeleteGreetingBL(int id)
         {
-            GreetingEntity deleteGreeting = new GreetingEntity();
-            deleteGreeting.Id = deleteGreetingRequest.Id;
-            return _greetingRL.DeleteGreetingRL(deleteGreeting);
+            //GreetingEntity deleteGreeting = new GreetingEntity();
+            //deleteGreeting.Id = id;
+            return _greetingRL.DeleteGreetingRL(id);
         }
 
 
