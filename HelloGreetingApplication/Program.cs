@@ -45,6 +45,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();// responsible for colorfullness
 }
 
+// Add Global Exception Middleware
+
+app.UseMiddleware<MiddleWare.MiddleWare.GlobalExceptionMiddleware>();
+
 // Configure the HTTP request pipeline.
 
 app.UseHttpsRedirection();

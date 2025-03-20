@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using RepositoryLayer.Context;
@@ -17,124 +16,69 @@ namespace RepositoryLayer.Service
         private readonly GreetingAppContext _dbContext;
         private readonly ILogger<GreetingRL> _logger;
 
-        public GreetingRL (GreetingAppContext dbContext, ILogger<GreetingRL> logger) 
+        public GreetingRL(GreetingAppContext dbContext, ILogger<GreetingRL> logger)
         {
             _dbContext = dbContext;
             _logger = logger;
-        }    
+        }
 
-        //Method to get the greeting message
         private string GetMessage()
         {
             return GreetingMsg;
         }
+
         public string GetGreetingRL()
         {
             return GetMessage();
         }
 
-
-        public GreetingEntity SaveGreetingRL(GreetingEntity greetingEntity)  
+        public GreetingEntity SaveGreetingRL(GreetingEntity greetingEntity)
         {
-            try 
-            {
-                _logger.LogInformation("Starting the process of Saving the greeting to database");
-                _dbContext.Greetings.Add(greetingEntity);
-                _dbContext.SaveChanges();//key ID is saved and is reflected to the object so we can access it 
-                _logger.LogInformation("Greeting saved to database successfully");
-                int id = greetingEntity.Id;
-                GreetingEntity greetingResponce = new GreetingEntity();
-                greetingResponce.Id = id;
-                greetingResponce.Greeting = greetingEntity.Greeting;
+            _logger.LogInformation("Starting the process of saving the greeting to database");
+            _dbContext.Greetings.Add(greetingEntity);
+            _dbContext.SaveChanges();
+            _logger.LogInformation("Greeting saved to database successfully");
 
-                return greetingResponce;
-            }
-            catch (Exception ex) 
-            {
-                _logger.LogError($"Error occured while saving the greeting to database database : {ex.Message}");
-                GreetingEntity greetingResponce = new GreetingEntity();
-
-                greetingResponce.Greeting = ex.Message;
-                greetingResponce.Id = -1;
-                return greetingResponce;
-            }
-            
-            
-            
-
+            return new GreetingEntity { Id = greetingEntity.Id, Greeting = greetingEntity.Greeting };
         }
 
-        public (string greeting, bool condition) GetGreetingByIdRL(int id) 
+        public (string greeting, bool condition) GetGreetingByIdRL(int id)
         {
-            var greeting = _dbContext.Greetings.FirstOrDefault(greeting => greeting.Id == id);
-
-            if( greeting == null)
-            {
-                return ($"Greeting not found for Id : {id}", false);
-            }
-            return (greeting.Greeting, true);
+            var greeting = _dbContext.Greetings.FirstOrDefault(g => g.Id == id);
+            return greeting != null ? (greeting.Greeting, true) : ($"Greeting not found for Id: {id}", false);
         }
 
-        public List<string> GetGreetingsRL() 
+        public List<string> GetGreetingsRL()
         {
-            try 
-            {
-                _logger.LogInformation("Starting the process of fetching greetings from dataset");
-                var Greetings = _dbContext.Greetings.Select(g => g.Greeting).ToList();
-
-                if (Greetings == null)
-                {
-                    _logger.LogInformation("Fetched successfully and was empty");
-                    return new List<string>();
-                }
-                _logger.LogInformation("Greeting Fetched successfully from database");
-                return Greetings;
-            }
-            catch (Exception ex) 
-            {
-                _logger.LogError("Error occured while fetching from database returning Customised list");
-                return new List<string> { ex.Message };
-            }
-            
+            _logger.LogInformation("Fetching greetings from dataset");
+            return _dbContext.Greetings.Select(g => g.Greeting).ToList();
         }
 
-        public (bool condition, string status, string greeting) EditGreetingRL(GreetingEntity editGreetingRequest) 
+        public (bool condition, string status, string greeting) EditGreetingRL(GreetingEntity editGreetingRequest)
         {
-            try 
+            var greeting = _dbContext.Greetings.FirstOrDefault(i => i.Id == editGreetingRequest.Id);
+            if (greeting == null)
             {
-                var greeting = _dbContext.Greetings.FirstOrDefault(i => i.Id == editGreetingRequest.Id);
-                if (greeting != null)
-                {
-                    greeting.Greeting = editGreetingRequest.Greeting;
-                    _dbContext.SaveChanges();
-                    return (true, "Greeting Edited", greeting.Greeting);
-                }
-                return (true, "Greeting Not Found", editGreetingRequest.Greeting);
+                return (false, "Greeting Not Found", editGreetingRequest.Greeting);
             }
-            catch (Exception ex) 
-            {
-                return (false, ex.Message, editGreetingRequest.Greeting);
-            }
+
+            greeting.Greeting = editGreetingRequest.Greeting;
+            _dbContext.SaveChanges();
+            return (true, "Greeting Edited", greeting.Greeting);
         }
 
         public (bool condition, string status, string greeting) DeleteGreetingRL(GreetingEntity editGreetingRequest)
         {
-            try
+            var greeting = _dbContext.Greetings.FirstOrDefault(i => i.Id == editGreetingRequest.Id);
+            if (greeting == null)
             {
-                var greeting = _dbContext.Greetings.FirstOrDefault(i => i.Id == editGreetingRequest.Id);
-                if (greeting != null)
-                {
-                    string DeletedGreeting = greeting.Greeting;
-                    _dbContext.Remove(greeting);
-                    _dbContext.SaveChanges();
-                    return (true, "Greeting Removed", DeletedGreeting);
-                }
-                return (false, "Greeting Not Found", $"No greeting found for ID : {editGreetingRequest.Id}");
+                return (false, "Greeting Not Found", $"No greeting found for ID: {editGreetingRequest.Id}");
             }
-            catch (Exception ex)
-            {
-                return (false, ex.Message, "Error Occured");
-            }
+
+            string deletedGreeting = greeting.Greeting;
+            _dbContext.Remove(greeting);
+            _dbContext.SaveChanges();
+            return (true, "Greeting Removed", deletedGreeting);
         }
     }
 }
