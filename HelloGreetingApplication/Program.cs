@@ -2,6 +2,7 @@ using BusinessLayer.Interface;
 using BusinessLayer.Service;
 using Microsoft.EntityFrameworkCore;
 using RepositoryLayer.Context;
+using RepositoryLayer.Helper;
 using RepositoryLayer.Interface;
 using RepositoryLayer.Service;
 
@@ -24,6 +25,9 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IGreetingBL, GreetingBL>();
 //Adding services of repository layer
 builder.Services.AddScoped<IGreetingRL, GreetingRL>();
+builder.Services.AddScoped<IUserBL, UserBL>();
+builder.Services.AddScoped<IUserRL, UserRL>();
+builder.Services.AddScoped<Jwt>();
 
 var connectionString = builder.Configuration.GetConnectionString("SqlConnection");
 builder.Services.AddDbContext<
