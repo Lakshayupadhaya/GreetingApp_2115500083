@@ -1,8 +1,10 @@
 using BusinessLayer.Email;
 using BusinessLayer.Interface;
+using BusinessLayer.RabbitMQ;
 using BusinessLayer.Redis;
 using BusinessLayer.Service;
 using Microsoft.EntityFrameworkCore;
+using RabbitMQ.Client;
 using RepositoryLayer.Context;
 using RepositoryLayer.Helper;
 using RepositoryLayer.Interface;
@@ -44,6 +46,32 @@ var redis = ConnectionMultiplexer.Connect(new ConfigurationOptions
 });
 builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
 builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
+
+//  Configure RabbitMQ
+builder.Services.AddSingleton<IConnectionFactory>(sp => new ConnectionFactory()
+{
+    HostName = "localhost",
+    DispatchConsumersAsync = true // Allow async processing
+});
+
+//  Register RabbitMQ Connection
+builder.Services.AddSingleton<IConnection>(sp =>
+{
+    var factory = sp.GetRequiredService<IConnectionFactory>();
+    return factory.CreateConnection(); // Create and return the RabbitMQ connection
+});
+
+//  Register RabbitMQ Channel
+builder.Services.AddSingleton<IModel>(sp =>
+{
+    var connection = sp.GetRequiredService<IConnection>();
+    return connection.CreateModel(); // Create and return the RabbitMQ channel
+});
+
+//  Register Producer and Consumer
+builder.Services.AddSingleton<Producer>();
+builder.Services.AddHostedService<Consumer>();
+
 
 var connectionString = builder.Configuration.GetConnectionString("SqlConnection");
 builder.Services.AddDbContext<

@@ -10,6 +10,7 @@ using RepositoryLayer.Interface;
 using RepositoryLayer.Helper;
 using RepositoryLayer.Entity;
 using BusinessLayer.Email;
+using BusinessLayer.RabbitMQ;
 
 namespace BusinessLayer.Service
 {
@@ -18,11 +19,13 @@ namespace BusinessLayer.Service
         private readonly IUserRL _userAuthRL;
         private readonly Jwt _jwt;
         private readonly EmailHelper _email;
-        public UserBL(IUserRL userAuthRL, Jwt jwt, EmailHelper email)
+        private readonly Producer _rabitMQProducer;
+        public UserBL(IUserRL userAuthRL, Jwt jwt, EmailHelper email, Producer rabitMQProducer)
         {
             _userAuthRL = userAuthRL;
             _jwt = jwt;
             _email = email;
+            _rabitMQProducer = rabitMQProducer;
         }
         public Responce<RegisterResponceDTO> RegisterUserBL(UserRegistrationDTO newUser)
         {
@@ -95,11 +98,11 @@ namespace BusinessLayer.Service
 
 
 
-            // Publish message to RabbitMQ
-            //var message = new { Email = email, ResetToken = resetToken };
-            //_rabitMQProducer.PublishMessage(message);
+            //Publish message to RabbitMQ
+            var message = new { Email = email, ResetToken = resetToken };
+            _rabitMQProducer.PublishMessage(message);
 
-            await _email.SendPasswordResetEmailAsync(email, resetToken);
+            //await _email.SendPasswordResetEmailAsync(email, resetToken);
 
 
             return (true, true); // Assume success (actual sending happens in Consumer)
