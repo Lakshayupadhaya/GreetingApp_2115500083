@@ -1,11 +1,13 @@
 using BusinessLayer.Email;
 using BusinessLayer.Interface;
+using BusinessLayer.Redis;
 using BusinessLayer.Service;
 using Microsoft.EntityFrameworkCore;
 using RepositoryLayer.Context;
 using RepositoryLayer.Helper;
 using RepositoryLayer.Interface;
 using RepositoryLayer.Service;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +32,18 @@ builder.Services.AddScoped<IUserBL, UserBL>();
 builder.Services.AddScoped<IUserRL, UserRL>();
 builder.Services.AddScoped<Jwt>();
 builder.Services.AddScoped<EmailHelper>();
+
+var redis = ConnectionMultiplexer.Connect(new ConfigurationOptions
+{
+    EndPoints = { "localhost:6379" },
+    AbortOnConnectFail = false,
+    ConnectTimeout = 15000,   // Increased connection timeout
+    SyncTimeout = 10000,      // Increased synchronous timeout
+    AsyncTimeout = 10000,
+    KeepAlive = 180           // Keep connection alive
+});
+builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
+builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
 
 var connectionString = builder.Configuration.GetConnectionString("SqlConnection");
 builder.Services.AddDbContext<

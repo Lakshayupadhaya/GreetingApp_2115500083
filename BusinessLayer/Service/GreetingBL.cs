@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using BusinessLayer.Interface;
 using ModelLayer.Model;
 using RepositoryLayer.Entity;
 using RepositoryLayer.Helper;
 using RepositoryLayer.Interface;
-using RepositoryLayer.Service;
 
 namespace BusinessLayer.Service
 {
@@ -16,35 +12,50 @@ namespace BusinessLayer.Service
     {
         private readonly IGreetingRL _greetingRL;
         private readonly Jwt _jwt;
+        private readonly IRedisCacheService _cacheService;
 
-        public GreetingBL(IGreetingRL greetingRL, Jwt jwt)
+        public GreetingBL(IGreetingRL greetingRL, Jwt jwt, IRedisCacheService cacheService)
         {
             _greetingRL = greetingRL;
             _jwt = jwt;
+            _cacheService = cacheService;
         }
 
-        //Method to get  greeting form repository layer
         public string GetGreetingBL()
         {
-            return _greetingRL.GetGreetingRL();
+            string cacheKey = "GreetingMessage";
+            var cachedGreeting = _cacheService.GetCache<string>(cacheKey);
+
+            if (cachedGreeting != null)
+            {
+                return cachedGreeting;
+            }
+
+            string greeting = _greetingRL.GetGreetingRL();
+
+            if (!string.IsNullOrEmpty(greeting))
+            {
+                _cacheService.SetCache(cacheKey, greeting, TimeSpan.FromMinutes(30));
+            }
+
+            return greeting;
         }
 
-        public string GetGreetingBL(GreetingRequestModel greetingRequest) 
+        public string GetGreetingBL(GreetingRequestModel greetingRequest)
         {
-            if ((!String.IsNullOrEmpty(greetingRequest.FirstName)) && (!String.IsNullOrEmpty(greetingRequest.LastName)))
+            if (!string.IsNullOrEmpty(greetingRequest.FirstName) && !string.IsNullOrEmpty(greetingRequest.LastName))
             {
                 return $"Hello {greetingRequest.FirstName} {greetingRequest.LastName}";
             }
-
-            else if ((!String.IsNullOrEmpty(greetingRequest.FirstName))) 
+            else if (!string.IsNullOrEmpty(greetingRequest.FirstName))
             {
                 return $"Hello {greetingRequest.FirstName}";
             }
-            else if ((!String.IsNullOrEmpty(greetingRequest.LastName))) 
+            else if (!string.IsNullOrEmpty(greetingRequest.LastName))
             {
                 return $"Hello {greetingRequest.LastName}";
             }
-            else 
+            else
             {
                 return "Hello World";
             }
@@ -52,72 +63,86 @@ namespace BusinessLayer.Service
 
         public (bool authorised, GreetingEntity) SaveGreetingBL(GreetingRequestModel saveGreetingRequest, string token)
         {
-
             string greetingMsg = GetGreetingBL(saveGreetingRequest);
             var result = _jwt.GetUserIdFromToken(token);
-            if (result == null) 
+            if (result == null)
             {
                 return (false, new GreetingEntity());
             }
-            int userId = result.Value;
-            GreetingEntity greetingEntity = new GreetingEntity();
-            greetingEntity.Greeting = greetingMsg;
-            greetingEntity.UserId = userId;
 
+            int userId = result.Value;
+            GreetingEntity greetingEntity = new GreetingEntity { Greeting = greetingMsg, UserId = userId };
             GreetingEntity greetingEntityResponce = _greetingRL.SaveGreetingRL(greetingEntity);
 
+            // Invalidate cached greetings list
+            _cacheService.RemoveCache($"Greetings_{userId}");
+
             return (true, greetingEntityResponce);
-
-            //ResponseModel<string> responce = new ResponseModel<string>();
-
-            //responce.Success = true;
-            //responce.Message = "Process successfull";
-            //responce.Data = greetingEntityResponce.ToString();
-
-            //return responce;
         }
 
         public (string greeting, bool condition) GetGreetingByIdBL(int id)
         {
-           (string greeting, bool condition) = _greetingRL.GetGreetingByIdRL(id);
+            string cacheKey = $"Greeting_{id}";
+            var cachedGreeting = _cacheService.GetCache<(string, bool)>(cacheKey);
 
-            return (greeting, condition);
+            if (cachedGreeting != default)
+            {
+                return cachedGreeting;
+            }
 
-            
+            var result = _greetingRL.GetGreetingByIdRL(id);
+            _cacheService.SetCache(cacheKey, result, TimeSpan.FromMinutes(30));
+
+            return result;
         }
 
-
-        public (bool authorised, bool found, GreetingsModel) GetGreetingsBL(string token) 
+        public (bool authorised, bool found, GreetingsModel) GetGreetingsBL(string token)
         {
             var result = _jwt.GetUserIdFromToken(token);
-            if(result == null) 
+            if (result == null)
             {
                 return (false, false, new GreetingsModel());
             }
+
+            string cacheKey = $"Greetings_{result.Value}";
+            var cachedList = _cacheService.GetCache<List<string>>(cacheKey);
+
+            if (cachedList != null)
+            {
+                return (true, true, new GreetingsModel { Greetings = cachedList });
+            }
+
             List<string> list = _greetingRL.GetGreetingsRL(result.Value);
-            if(list == null) 
+            if (list == null)
             {
                 return (true, false, new GreetingsModel());
             }
 
+            _cacheService.SetCache(cacheKey, list, TimeSpan.FromMinutes(30));
+
             return (true, true, new GreetingsModel { Greetings = list });
         }
 
-        public  (bool condition, string status, string greeting) EditGreetingBL(IdRequestModel editGreetingRequest)
+        public (bool condition, string status, string greeting) EditGreetingBL(IdRequestModel editGreetingRequest)
         {
-            GreetingEntity editGreeting = new GreetingEntity();
-            editGreeting.Id = editGreetingRequest.Id;
-            editGreeting.Greeting = editGreetingRequest.Greeting;
-            return _greetingRL.EditGreetingRL(editGreeting);
+            GreetingEntity editGreeting = new GreetingEntity { Id = editGreetingRequest.Id, Greeting = editGreetingRequest.Greeting };
+
+            var result = _greetingRL.EditGreetingRL(editGreeting);
+
+            // Invalidate cache for the updated greeting
+            _cacheService.RemoveCache($"Greeting_{editGreetingRequest.Id}");
+
+            return result;
         }
 
         public (bool condition, string status, string greeting) DeleteGreetingBL(int id)
         {
-            //GreetingEntity deleteGreeting = new GreetingEntity();
-            //deleteGreeting.Id = id;
-            return _greetingRL.DeleteGreetingRL(id);
+            var result = _greetingRL.DeleteGreetingRL(id);
+
+            // Remove deleted greeting from cache
+            _cacheService.RemoveCache($"Greeting_{id}");
+
+            return result;
         }
-
-
     }
 }
