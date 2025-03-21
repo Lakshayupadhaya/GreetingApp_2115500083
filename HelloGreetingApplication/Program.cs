@@ -1,3 +1,4 @@
+using BusinessLayer.Email;
 using BusinessLayer.Interface;
 using BusinessLayer.Service;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +29,7 @@ builder.Services.AddScoped<IGreetingRL, GreetingRL>();
 builder.Services.AddScoped<IUserBL, UserBL>();
 builder.Services.AddScoped<IUserRL, UserRL>();
 builder.Services.AddScoped<Jwt>();
+builder.Services.AddScoped<EmailHelper>();
 
 var connectionString = builder.Configuration.GetConnectionString("SqlConnection");
 builder.Services.AddDbContext<

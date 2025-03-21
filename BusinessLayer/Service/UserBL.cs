@@ -9,15 +9,20 @@ using ModelLayer;
 using RepositoryLayer.Interface;
 using RepositoryLayer.Helper;
 using RepositoryLayer.Entity;
+using BusinessLayer.Email;
 
 namespace BusinessLayer.Service
 {
     public class UserBL : IUserBL
     {
         private readonly IUserRL _userAuthRL;
-        public UserBL(IUserRL userAuthRL)
+        private readonly Jwt _jwt;
+        private readonly EmailHelper _email;
+        public UserBL(IUserRL userAuthRL, Jwt jwt, EmailHelper email)
         {
             _userAuthRL = userAuthRL;
+            _jwt = jwt;
+            _email = email;
         }
         public Responce<RegisterResponceDTO> RegisterUserBL(UserRegistrationDTO newUser)
         {
@@ -77,6 +82,37 @@ namespace BusinessLayer.Service
             responce1.Message = "Incorrect Email or Password";
             responce1.Data = "No Token Generated";
             return responce1;
+        }
+        public async Task<(bool Sent, bool found)> ForgotPasswordBL(string email)
+        {
+            bool exists = _userAuthRL.Checkuser(email);
+            if (!exists)
+            {
+                return (false, false);
+            }
+
+            var resetToken = _jwt.GenerateResetToken(email);
+
+
+
+            // Publish message to RabbitMQ
+            //var message = new { Email = email, ResetToken = resetToken };
+            //_rabitMQProducer.PublishMessage(message);
+
+            await _email.SendPasswordResetEmailAsync(email, resetToken);
+
+
+            return (true, true); // Assume success (actual sending happens in Consumer)
+        }
+
+        public async Task<bool> ResetPasswordBL(string token, string newPassword)
+        {
+            var email = _jwt.ValidateResetToken(token);
+            if (email == null) return false;
+
+            string newHashPassword = PasswordHasher.HashPassword(newPassword);
+
+            return await _userAuthRL.UpdateUserPassword(email, newHashPassword);
         }
     }
 }
